@@ -98,26 +98,25 @@ strings *destroy(strings *node)
 				exit(1);
 		}
 
+		// Free the string.
 		free(node->string);
-		free(node);
-
-		if ( node->next != NULL ) 
+		// Move the node links if they exist.
+		if ( node->prev != NULL && node->next != NULL ) 
 		{
-				if ( node->prev != NULL ) 
-				{
-						node->prev->next = node->next;
-						node->next->prev = node->prev;
-				} else
-				{
-						node->next->prev = NULL;
-						return node->next;
-				}
-		} else {
-				if ( node->prev != NULL ) 
-				{
-						node->prev->next = NULL;
-				}
-		}
+			// [0] -> [2]
+			node->prev->next = node->next;
+			// [0] <- [2]
+			node->next->prev = node->prev;	
+		} else
+		{ 
+			// Move the links for one-sided nodes.
+			if ( node->prev != NULL ) node->prev->next = NULL;
+			if ( node->next != NULL ) node->next = NULL;
+		}	
+		
+		strings *cached_node = node;
+		node = node->next;
+		free(cached_node);
 
 		for ( ; node->prev != NULL; node = node->prev);
 		return node;
