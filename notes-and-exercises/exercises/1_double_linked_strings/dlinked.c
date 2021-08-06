@@ -38,12 +38,8 @@ strings *set(strings *node, const char *s)
 {
 		strings *new_node;
 
-		if ( node == NULL ) 
-		{
-				new_node = (strings *) ecmalloc(sizeof(strings));
-				new_node->next = NULL;
-				return populate(s);
-		} else
+		if ( node == NULL ) return populate(s);
+		else
 		{
 				new_node = node;
 				free(new_node->string);
@@ -158,24 +154,23 @@ strings *populate(const char *s)
 
 void teardown(strings **head)
 {
-		strings *start = *head;
-		strings *node;
-		if ( start->next == NULL ) 
-		{
-				if ( start->string != NULL ) free(start->string);
-				start = NULL;
-				free(start);				
-				*head = start;
-				return;
-		}
+	strings *node = *head;
+	strings *cached;
 
-		node = start->next;
-		do {								
-				if ( node->prev->string != NULL ) free(node->prev->string);
-				node->prev = NULL;
-				free(node->prev);
-				node = node->next;
-		} while (node != NULL && node->next != NULL);
+	do 
+	{
+		node->prev = NULL;
+		// Free string.
+		free(node->string);
+		// Cache and move.
+		cached = node;
+		node = node->next;
+		// Remove links.
+		cached->next = cached->prev = NULL;
+		// Free the cached (previous) node.
+		free(cached);
+	}	while(node != NULL);
+	
 	*head = NULL;
 }
 
