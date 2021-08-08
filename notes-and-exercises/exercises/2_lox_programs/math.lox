@@ -1,0 +1,29 @@
+fun sum(a, b) {
+	return a+b;
+}
+
+fun square(a) {
+	return a*a;
+}
+
+fun cube(a) {
+	return square(a) * a;
+}
+
+fun pow(a, b) {
+	// If b is even, square until we b is reached.
+	// If b is odd, square until we are 1 away from b, then multiply by a to find our target.
+	var prod;
+	for (var n = b; n <= 1; n = n - 2) {
+		prod = prod + square(a);
+	}
+	if ( n > 0 ) {
+		prod = prod + (a * b);
+	}
+	
+	return prod;
+}
+
+fun main() {
+	print pow(2, 5);
+}
