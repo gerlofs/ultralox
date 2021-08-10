@@ -1,0 +1,76 @@
+// TEST.LOX
+
+var VERSION = 0.001
+class LinkedList {
+	init(string, length) {
+	 // Create a new node by populating the string,
+	 //	next, and prev properties.
+
+	 	this.string = string;
+	 	this.length = length;
+		this.next = nil;
+		this.prev = nil;
+	}
+
+	traverse() {
+	// Find the last node in the list, return it.
+		var node = this;
+		for (; (node.next != nil); node = node.next) {}	
+		return node;
+	}
+
+	append(string, length) {
+	// Find the last node in the list, add another instane of 
+	//	LinkedList onto the end of this node (this.next).
+		var node = this.traverse();
+		node.next = LinkedList(string, length);
+		node.next.prev = node;
+		return node;
+	}
+
+	insert(index, string, length) {
+		var count = 0;
+		var node = this;
+
+		for (; (node.next != nil) and (count+1 != index);
+			node = node.next) {}	
+
+		if ( node.next == nil ) {
+			return node.append(string, length);
+		}
+
+		var cached = node.next;
+		node.next = LinkedList(string, length);
+		node.next.prev = node;
+		node = node.next;
+		node.next = cached;
+		return node;
+	}
+
+	find(string) {
+		var node = this;
+		for (; (node != nil) and (string != node.string);
+			node = node.next) {}
+		return node;
+	}
+
+	destroy() {
+		if ( this != nil ) {
+			this.prev.next = this.next;
+			this.next.prev = this.prev;
+			this.string = nil;
+			this.length = nil;
+			this.next = nil;
+			this.prev = nil;
+		}
+	}
+}
+
+
+// TESTS:
+var head = LinkedList("Head Node", 9);
+head.append("Third Node", 10);
+head.insert(1, "Second Node", 11);
+head.append("Fourth Node", 11);
+var node = head.find("Second Node");
+node.destroy();
