@@ -13,14 +13,27 @@ function splitString(string, delimiter)
 	return strings
 end
 
+function rpn_parenthesise(name, expressions)
+	local string = "("
+	for key, expr in pairs(expressions) do
+		string = string .. " " .. expr:accept()
+	end
+	string = string .. " " .. name .. " )"
+	return string
+end
 function parenthesise(name, expressions)
 	local string = "(" .. name
 	for key, expr in pairs(expressions) do
-		print(key, expr)
 		string = string .. " " .. expr:accept()
 	end
 	string = string .. ")"
 	return string
+end
+
+
+if ( #arg > 0 ) and ( arg[1] == "Łukasiewicz" ) then
+	print("Wejście w tryb polski!")
+	parenthesise = rpn_parenthesise
 end
 
 -- Base Visitor class
@@ -33,24 +46,20 @@ function Visitor:init(object)
 end
 
 function Visitor:visitBinaryExpr(expr)
-	print("Visited binary expression! ")
 	return parenthesise(expr.operator.lexeme,
 				{expr.left, expr.right})
 end
 
 function Visitor:visitLiteralExpr(expr)
-	print("Visited literal expression!")
 	if ( expr.value == nil ) then return "nil" end
 	return tostring(expr.value)
 end
 
 function Visitor:visitGroupingExpr(expr)
-	print("Visited grouping expression!")
 	return parenthesise("group", {expr.expression})
 end
 
 function Visitor:visitUnaryExpr(expr)
-	print("Visited unary expression!")
 	return parenthesise(expr.operator.lexeme, {expr.right})
 end
 
@@ -88,19 +97,41 @@ function Unary:accept()
 end
 
 binary_expr = Binary:init{
-	left=Unary:init{
+	left=Binary:init{
+		left=Literal:init{value=1},
 		operator=Token:init({
-					typestring	= "MINUS", 
-					lexeme		= "-",
-					literal		= nil,
-					line		= 33}),
-		right=Literal:init{
-					value		= 10}},
+			typestring="PLUS",
+			lexeme="+",
+			literal=nil,
+			line=1
+		}),
+		right=Literal:init{value=2}
+	},
 	operator=Token:init({
-				typestring	= "STAR",
-				lexeme		= "*",
-				literal		= nil,
-				line		= 33}),
-	right=Grouping:init{
-				expression	= Literal:init{value=50}}}
+		typestring="STAR",
+		lexeme="*",
+		literal=nil,
+		line=1
+	}),
+	right=Binary:init{
+		left=Literal:init{value=4},
+		operator=({
+			typestring="MINUS",
+			lexeme="-",
+			literal=nil,
+			line=1
+		}),
+		right=Literal:init{value=3},
+	}
+}
+print(binary_expr:accept())
+
+binary_expr = Binary:init{
+	left=Literal:init{value=10},
+	operator=Token:init({
+			typestring = "PLUS",
+			lexeme = "+",
+			literal = nil,
+			line = 1}),
+	right=Literal:init{value = 5}}
 print(binary_expr:accept())
