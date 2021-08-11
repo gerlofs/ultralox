@@ -48,7 +48,7 @@ function Scanner:readWholeFile(fh)
 end
 
 function Scanner:atEnd()
-	return Scanner.current >= Scanner.source:len()
+	return Scanner.current > Scanner.source:len()
 end
 
 function Scanner:scanTokens(source)
@@ -99,8 +99,11 @@ function Scanner:findToken()
 				and (not Scanner:atEnd()) ) do
 				Scanner:advance()
 			end
+		elseif ( Scanner:matchNext('*') ) then 
+			Scanner:advance() -- Consume asterisk
+			Scanner:multiLineComment(1)
 		else
-			Scanner:addToken("SLASH");
+			Scanner:addToken("SLASH")
 		end
 	elseif ( char == '"' ) then
 		Scanner:string()
@@ -114,10 +117,18 @@ end
 
 function Scanner:matchNext(expected_char)
 	if ( Scanner:atEnd() ) then return false end
+	print("MATCH NEXT: " .. Scanner.source:sub(Scanner.current, Scanner.current))
+
 	local char = Scanner.source:sub(Scanner.current, Scanner.current)
 	if ( char ~= expected_char ) then return false end
 	Scanner.current = Scanner.current + 1
 	return true
+end
+
+function Scanner:matchPrev(expected_char)
+	local char = Scanner.source:sub(Scanner.current-1, 
+					Scanner.current-1)
+	return (char == expected_char)
 end
 
 function Scanner:peekAhead()
@@ -127,7 +138,7 @@ end
 
 function Scanner:doublePeek()
 	local ahead_pos = Scanner.current + 1
-	if ( (ahead_pos) >= Scanner.source:len() ) then
+	if ( (ahead_pos) > Scanner.source:len() ) then
 		return '\0' 
 	end
 	return Scanner.source:sub(ahead_pos, ahead_pos)
@@ -217,6 +228,39 @@ end
 
 function Scanner:isDigit(char)
 	return char >= '0' and char <= '9'
+end
+
+function Scanner:multiLineComment(open_blocks_remaining)
+	--[[
+	--	Parse until we find an end block ('*' + '/').
+	--	If we find another start block ('/' + '*')
+	--		increment a counter and ensure we find
+	--		that many end blocks, otherwise there 
+	--		is an unescaped multi-line comment.
+	--]]
+	while ( (Scanner:peekAhead() ~= '*') and (not Scanner:atEnd()) ) do
+		Scanner:advance()
+	end
+	
+	if ( Scanner:atEnd() and (open_blocks_remaining > 0) ) then
+		Lox:reportError(Scanner.line, "Unterminated block comment")
+		return
+	end
+
+	if ( Scanner:doublePeek() == '/' ) then
+		open_blocks_remaining = open_blocks_remaining - 1
+	elseif ( Scanner:matchPrev('/') ) then
+		open_blocks_remaining = open_blocks_remaining + 1
+	end
+
+	Scanner:advance() -- Consume asterisk
+
+	if ( open_blocks_remaining <= 0 ) then
+		Scanner:advance() -- Consume closing comment
+		return
+	end
+
+	return Scanner:multiLineComment(open_blocks_remaining)	
 end
 
 --Scanner:init()
