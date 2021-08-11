@@ -1,21 +1,24 @@
 local exit_codes = require "exit_codes"
 local token_type = require "token_type"
-local Lox = require "Lox"
-Token = {
 
-}
+Token = {}
+Token.__index = Token
 
-function Token:init(t_type, lexeme, literal, line)
-	self.t_type = t_type
-	self.lexeme = lexeme
-	self.literal = literal
-	self.line = line
-	return self
+function Token:init(settings)
+	local token = {}
+	setmetatable(token,Token)
+	token.typestring = settings.typestring
+	token.lexeme = settings.lexeme
+	token.literal = settings.literal
+	token.line = settings.line
+	return token
 end
 
 function Token:toString()
-	return "" .. self.t_type .. " " .. self.lexeme .. " " ..
-		self.literal .. " " .. self.line
+	return "" .. tostring(self.typestring) .. 
+		" " .. tostring(self.lexeme) ..
+		" " .. tostring(self.literal) ..
+		" " .. tostring(self.line)
 end
 
 Scanner = {
@@ -26,7 +29,7 @@ Scanner = {
 
 function Scanner:init(filename) 
 	-- TODO: Create actual class using metatables.
-	Scanner.fh = self:openFile(filename)
+	-- Scanner.fh = self:openFile(filename)
 end
 
 function Scanner:openFile(filename)
@@ -131,11 +134,19 @@ function Scanner:doublePeek()
 end
 
 function Scanner:addToken(typestring, literal)
+	--[[
+	--	Create a new token instance containing the lexeme 
+	--		(actual text), its type (lookup token_type 
+	--		table), its line in the source text, and 
+	--		its literal value if required.
+	--	Insert the token into the class-wide table.
+	--]]
 	text = Scanner.source:sub(Scanner.start, Scanner.current)
-	print("TOKEN: " .. typestring .. " " .. text)
-	if ( literal ) then print("LITERAL:" .. literal) end
-	table.insert(Scanner.tokens, Token:init(token_type[typestring],
-			text, literal, Scanner.line))
+	local new_token = Token:init({typestring=token_type[typestring],
+		lexeme=text,
+		literal=literal, 
+		line=Scanner.line})
+	table.insert(Scanner.tokens, new_token)	
 end
 
 function Scanner:contains(table, match)
@@ -153,7 +164,6 @@ function Scanner:identifier()
 	end
 	local string = Scanner.source:sub(
 			Scanner.start, Scanner.current-1):upper()
-	print(string)
 	local result = Scanner:contains(Scanner.reserved, string)
 
 	if ( result ) then
@@ -209,6 +219,8 @@ function Scanner:isDigit(char)
 	return char >= '0' and char <= '9'
 end
 
-Scanner:init("test.lox")
-local lines = Scanner:readWholeFile(Scanner.fh)
-local tokens = Scanner:scanTokens(lines)
+--Scanner:init()
+--Scanner.fh = Scanner:openFile("test.lox")
+--local lines = Scanner:readWholeFile(Scanner.fh)
+--local tokens = Scanner:scanTokens(lines)
+return { Scanner, Token }
