@@ -16,6 +16,7 @@ end
 function parenthesise(name, expressions)
 	local string = "(" .. name
 	for key, expr in pairs(expressions) do
+		print(key, expr)
 		string = string .. " " .. expr:accept()
 	end
 	string = string .. ")"
@@ -42,6 +43,17 @@ function Visitor:visitLiteralExpr(expr)
 	if ( expr.value == nil ) then return "nil" end
 	return tostring(expr.value)
 end
+
+function Visitor:visitGroupingExpr(expr)
+	print("Visited grouping expression!")
+	return parenthesise("group", {expr.expression})
+end
+
+function Visitor:visitUnaryExpr(expr)
+	print("Visited unary expression!")
+	return parenthesise(expr.operator.lexeme, {expr.right})
+end
+
 -- Base Expr class
 Expr = {}
 function Expr:init(object) 
@@ -62,69 +74,33 @@ function Binary:accept()
 	return Visitor:visitBinaryExpr(self)
 end
 
--- Takes an expression
-function Grouping:init(expression)
-	self.expression = expression
-end
-
 -- Takes an object
 function Literal:accept()
 	return Visitor:visitLiteralExpr(self)
 end
 
--- Takes a token and an expression
-function Unary:init(operator, right)
-	self.operator = operator
-	self.right = right
+function Grouping:accept()
+	return Visitor:visitGroupingExpr(self)
 end
 
-l = Literal:init{value=10}
-r = Literal:init{value=5}
-b = Binary:init{left=l, 
+function Unary:accept()
+	return Visitor:visitUnaryExpr(self)
+end
+
+binary_expr = Binary:init{
+	left=Unary:init{
 		operator=Token:init({
-		typestring="ADD", lexeme="+", 
-		literal=nil, line=33}), 
-		right=r}
-print(b:accept())
---[[
-nd
-
-Tree = {}
-
-function Tree:setOutputDirectory()
-	if ( #arg ~= 1 ) then
-		io.stderr.write("Usage: generate_ast <output directory>")
-		io.exit(64)
-	end
-	Tree.outputDirectory = arg[1]
-end
-
-function Tree:defineType(fh, base_name, class_name, fields)
-	
-end
-
-function Tree:defineAST(base_name, types)
-	local write_directory = Tree.outputDirectory .. "/" .. 
-				base_name .. ".lua"
-	local write_fh = assert(io.open(write_directory, "w"))
-	-- Create the base class (table).
-	write_fh.write(base_name .. "={}")
-	for _, t in pairs(types) do
-		local temp = splitString(t, ": ")
-		local class_name = temp[1]
-		local fields = temp[2]
-		Tree:defineType(write_fh, base_name, class_name, fields)
-	end
-	write_fh:close()
-end
-
-function Tree:generateAST()
-	Tree:setOutputDirectory()
-	local types = {
-		"Binary : Expr left, Token operator, Expr right",
-		"Grouping : Expr expression",
-		"Literal : Object value",
-		"Unary : Token operator, Expr right"
-	}
-	Tree:defineAST("Expr", types)
-end--]]
+					typestring	= "MINUS", 
+					lexeme		= "-",
+					literal		= nil,
+					line		= 33}),
+		right=Literal:init{
+					value		= 10}},
+	operator=Token:init({
+				typestring	= "STAR",
+				lexeme		= "*",
+				literal		= nil,
+				line		= 33}),
+	right=Grouping:init{
+				expression	= Literal:init{value=50}}}
+print(binary_expr:accept())
