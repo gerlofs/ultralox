@@ -74,7 +74,8 @@ end
 
 function Scanner:findToken()
 	local char = Scanner:advance()
-	if ( char == ' ' or char == '\r' or char == '\t' ) then return
+	if ( char == ' ' or char == '\r' or char == '\t' or char == '\n')
+		then return
 	elseif ( char == '(' ) then Scanner:addToken("LEFT_PAREN", nil)
 	elseif ( char == ')') then Scanner:addToken("RIGHT_PAREN", nil)
 	elseif ( char == '{') then Scanner:addToken("LEFT_BRACE", nil)
@@ -111,14 +112,13 @@ function Scanner:findToken()
 		Scanner:number()
 	elseif ( Scanner:isAlpha(char) ) then
 		Scanner:identifier()
-	else Lox:reportError(Scanner.line, "Unexpected character")
+	else 
+		Lox:reportError(Scanner.line, "Unexpected character")
 	end
 end
 
 function Scanner:matchNext(expected_char)
 	if ( Scanner:atEnd() ) then return false end
-	print("MATCH NEXT: " .. Scanner.source:sub(Scanner.current, Scanner.current))
-
 	local char = Scanner.source:sub(Scanner.current, Scanner.current)
 	if ( char ~= expected_char ) then return false end
 	Scanner.current = Scanner.current + 1
